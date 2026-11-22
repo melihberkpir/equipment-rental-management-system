@@ -24,6 +24,7 @@ import com.equipmentrental.security.AuthenticatedUser;
 import jakarta.persistence.criteria.Predicate;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -45,14 +46,16 @@ public class ReservationService {
     private final UserRepository users;
     private final PaymentRepository payments;
     private final AvailabilityService availability;
+    private final Clock clock;
 
     public ReservationService(ReservationRepository reservations, EquipmentRepository equipment,
-            UserRepository users, PaymentRepository payments, AvailabilityService availability) {
+            UserRepository users, PaymentRepository payments, AvailabilityService availability, Clock clock) {
         this.reservations = reservations;
         this.equipment = equipment;
         this.users = users;
         this.payments = payments;
         this.availability = availability;
+        this.clock = clock;
     }
 
     @Transactional
@@ -62,7 +65,7 @@ public class ReservationService {
         if (!start.isBefore(end)) {
             throw new BadRequestException("startDate must be before endDate");
         }
-        if (start.isBefore(LocalDate.now())) {
+        if (start.isBefore(LocalDate.now(clock))) {
             throw new BadRequestException("startDate must not be in the past");
         }
         Equipment item = equipment.findByIdForUpdate(request.equipmentId())
@@ -97,7 +100,7 @@ public class ReservationService {
         Reservation reservation = reservations.findByIdForUpdate(id)
                 .orElseThrow(() -> new NotFoundException("Reservation not found"));
         requireOwnerOrAdmin(reservation, currentUser);
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(clock);
 
         if (!isAdmin(currentUser)) {
             if (target != ReservationStatus.CANCELLED) {

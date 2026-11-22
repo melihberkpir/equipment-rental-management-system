@@ -19,7 +19,9 @@ import com.equipmentrental.repository.ReservationRepository;
 import com.equipmentrental.repository.UserRepository;
 import com.jayway.jsonpath.JsonPath;
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -32,8 +34,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -52,6 +57,18 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
 @AutoConfigureMockMvc
 @Testcontainers
 class ReservationIntegrationTest {
+
+    private static final LocalDate TODAY = LocalDate.of(2030, 1, 15);
+
+    @TestConfiguration
+    static class FixedClockConfig {
+
+        @Bean
+        @Primary
+        Clock fixedClock() {
+            return Clock.fixed(TODAY.atStartOfDay(ZoneOffset.UTC).toInstant(), ZoneOffset.UTC);
+        }
+    }
 
     @Container
     @ServiceConnection
@@ -319,7 +336,7 @@ class ReservationIntegrationTest {
     }
 
     private static String day(int offset) {
-        return LocalDate.now().plusDays(offset).toString();
+        return TODAY.plusDays(offset).toString();
     }
 
     private static long id(ResultActions result) throws Exception {
