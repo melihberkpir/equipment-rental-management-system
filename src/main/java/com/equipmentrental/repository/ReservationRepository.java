@@ -31,6 +31,15 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long>,
     @Query("select r from Reservation r where r.id = :id")
     Optional<Reservation> findByIdForUpdate(@Param("id") Long id);
 
+    @Query("""
+            select r from Reservation r
+            join fetch r.user
+            join fetch r.equipment e
+            join fetch e.category
+            where r.id = :id
+            """)
+    Optional<Reservation> findForAgreement(@Param("id") Long id);
+
     boolean existsByEquipmentId(Long equipmentId);
 
     /** Checks the half-open date range [start, end). */
